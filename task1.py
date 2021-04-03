@@ -1,4 +1,5 @@
 import math
+
 from App import App
 
 
@@ -13,7 +14,7 @@ def sign(x):
         return x
 
 
-def points_by_func(f, interval, width, height):
+def get_min_max_y(f, interval, width):
     a, b = interval[0], interval[1]
     miny = maxy = f(a)
     for xx in range(width):
@@ -23,19 +24,23 @@ def points_by_func(f, interval, width, height):
             miny = y
         if y > maxy:
             maxy = y
+    return miny, maxy
+
+
+def points_by_func(f, interval, width, height):
+    a, b = interval[0], interval[1]
+    miny, maxy = get_min_max_y(f, interval, width)
     yy = (f(a) - miny) * height / (maxy - miny)
-    # yy = (f(a) - miny) * width / (b - a)
     yield 0, height - yy
     for xx in range(1, width):
         x = a + xx * (b - a) / width
         yy = (f(x) - miny) * height / (maxy - miny)
-        # yy = (f(x) - miny) * width / (b - a)
         yield xx, height - yy
 
 
-def pixels_by_line(a, b):
-    x1, y1 = a[0], a[1]
-    x2, y2 = b[0], b[1]
+def pixels_by_line(xy1, xy2):
+    x1, y1 = int(xy1[0]), int(xy1[1])
+    x2, y2 = int(xy2[0]), int(xy2[1])
 
     length = max(abs(x2 - x1), abs(y2 - y1))
     dx = (x2 - x1) / length
@@ -63,14 +68,23 @@ def get_pixels(func, width, height, a, b):
 
 def main():
     def f(x):
-        return x * math.sin(x)
-    a, b = -10, 10
+        return math.sin(x * x)
+
+    a, b = -5, 7
     width, height = 640, 640
     app = App((width, height))
 
     pixels = get_pixels(f, width, height, a, b)
     app.draw(pixels)
 
+    x = width / (b - a) * -a
+    app.draw(pixels_by_line((x, 0), (x, height)), color=(150, 0, 150))
+
+    miny, maxy = get_min_max_y(f, (a, b), width)
+    y = height / (maxy - miny) * maxy
+    app.draw(pixels_by_line((0, y), (width, y)), color=(150, 150, 0))
+
+    app.save('img.png')
     app.mainloop()
 
 
