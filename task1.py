@@ -70,12 +70,9 @@ def main():
     def f(x):
         return math.sin(x * x)
 
-    a, b = -5, 7
+    a, b = -3, 3
     width, height = 640, 640
     app = App((width, height))
-
-    pixels = get_pixels(f, width, height, a, b)
-    app.draw(pixels)
 
     x = width / (b - a) * -a
     app.draw(pixels_by_line((x, 0), (x, height)), color=(150, 0, 150))
@@ -83,6 +80,11 @@ def main():
     miny, maxy = get_min_max_y(f, (a, b), width)
     y = height / (maxy - miny) * maxy
     app.draw(pixels_by_line((0, y), (width, y)), color=(150, 150, 0))
+
+    pixels = get_pixels(f, width, height, a, b)
+    app.draw(pixels)
+
+    app.update_image()
 
     app.save('img.png')
     app.mainloop()
