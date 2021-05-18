@@ -24,6 +24,11 @@ class Vector:
     def tup(self):
         return self.x, self.y, self.z
 
+    def rotate_x(self, angle, y, z):
+        return Vector(self.x,
+                      (self.y - y) * math.cos(angle) - (self.z - z) * math.sin(angle) + y,
+                      (self.y - y) * math.sin(angle) + (self.z - z) * math.cos(angle) + z)
+
     @staticmethod
     def from_tup(tup):
         return Vector(tup[0], tup[1], tup[2])
@@ -67,6 +72,10 @@ class Polyhedron:
             interval = polygon_slice(self.vertices, self.polygons[polygon_index], y)
             if interval:
                 yield Segment(interval[0], interval[1], polygon_index, self)
+
+    def rotate_x(self, angle, y, z):
+        points = [point.rotate_x(angle, y, z).tup() for point in self.vertices]
+        return Polyhedron(points, self.polygons, self.colors)
 
 
 class Segment:
@@ -181,7 +190,7 @@ def find_all_intersections(segments):
             result = intersect(segments[i], segments[j])
             if result and not (result in intersections):
                 intersections.append(result)
-    return [FlatVector(round(border[0]), round(border[1])) for border in intersections]
+    return [FlatVector(int(border[0]), int(border[1])) for border in intersections]
 
 
 def segments_to_borders(segments):
@@ -193,7 +202,7 @@ def segments_to_borders(segments):
         border = segment.right.tup()
         if not(border in borders):
             borders.append(border)
-    return [FlatVector(round(border[0]), round(border[1])) for border in borders]
+    return [FlatVector(int(border[0]), int(border[1])) for border in borders]
 
 
 def main():
@@ -206,12 +215,19 @@ def main():
         [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
     )
     pyramid = Polyhedron(
-        [(400, 100, 200), (300, 300, 200), (450, 250, 150), (500, 200, 300), (300, 200, 300)],
+        [(400, 100, 200), (300, 300, 200), (450, 250, 150), (550, 150, 300), (300, 200, 300)],
         [[0, 1, 2], [0, 1, 4], [0, 2, 3], [1, 2, 3, 4], [0, 3, 4]],
         [(255, 0, 255), (0, 255, 255), (0, 0, 0), (255, 255, 0), (255, 125, 125)]
     )
+    polygon = Polyhedron(
+        [(400, 100, 200), (300, 300, 200), (450, 250, 150), (200, 200, 300)],
+        [[0, 2, 1, 3]],
+        [(255, 0, 0)]
+    )
 
-    polyhedrons = [tetrahedron, pyramid]
+    pyramid = pyramid.rotate_x(-math.pi / 3.5, 100, 200)
+
+    polyhedrons = [pyramid]
 
     for y in range(height):
         segments = [segment for segment in polyhedrons_to_borders(polyhedrons, y)]
@@ -226,7 +242,7 @@ def main():
         for i in range(len(all_borders) - 1):
             left = all_borders[i]
             right = all_borders[i + 1]
-            if left == right:
+            if left.x == right.x:
                 continue
             result = find_belonging(segments, (left.x + right.x) / 2)
             if result:
